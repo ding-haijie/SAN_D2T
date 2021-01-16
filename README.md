@@ -1,7 +1,7 @@
 
-# WikiBio
+# SAN_D2T
 
-*Generate text from Structured-data (Wikipedia Table)*.
+*Generate text from Structured-data (i.e. Wikipedia Table)*.
 
 ## Model Overview
 
