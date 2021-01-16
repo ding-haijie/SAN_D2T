@@ -1,0 +1,7 @@
+/__pycache__
+/*.pyc
+/.idea
+/.vscode
+/results/
+/test.py
+/.mypy_cache/
