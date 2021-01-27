@@ -38,6 +38,7 @@ class DataProcessor(object):
                 tag='train')
             self.seq_info_dev, self.seq_target_dev = self._process_data(
                 tag='dev')
+            self.test_data = self._load_data('./data/test_data.json')
         else:
             self.test_data = self._load_data('./data/test_data.json')
 
