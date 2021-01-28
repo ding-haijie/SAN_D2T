@@ -2,11 +2,10 @@ import json
 import numpy as np
 import torch
 import torch.utils.data as Data
-from parameters import parameters
 
 
 class DataProcessor(object):
-    def __init__(self):
+    def __init__(self, args):
         self.vocab = self._load_data('./data/vocab.json')
         self.word2ind = self.vocab['word2ind']
         self.ind2word = {key: value for value, key in self.word2ind.items()}
@@ -24,13 +23,13 @@ class DataProcessor(object):
         self.UNK_FIELD = self.field2ind['UNK_FIELD']  # 1
 
         # max number of the position
-        self.pos_size = parameters['pos_size']
+        self.pos_size = args.pos_size
         # max length of the summaries
-        self.max_len = parameters['max_len']
+        self.max_len = args.max_len
         # max number of the fields been chose
-        self.max_field = parameters['max_field']
+        self.max_field = args.max_field
 
-        if parameters['train_mode']:
+        if args.train_mode:
             self.train_data = self._load_data('./data/train_data.json')
             self.dev_data = self._load_data('./data/valid_data.json')
 

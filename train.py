@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import time
 import shutil
@@ -6,45 +7,66 @@ from torch import optim
 import torch.nn as nn
 
 from utils import *
-from parameters import parameters
 from data_processor import DataProcessor
 from evals import BleuScore, RougeScore
 from early_stopping import EarlyStopping
 from model import EncoderAttn, DecoderAttn, Table2Text
 
-batch_size = parameters['batch_size']
-max_epoch = parameters['max_epoch']
-learning_rate = parameters['learning_rate']
-field_emb_dim = parameters['field_emb_dim']
-pos_embed_dim = parameters['pos_embed_dim']
-word_embed_dim = parameters['word_embed_dim']
-hidden_dim = parameters['hidden_dim']
-dropout = parameters['dropout']
-weight_decay = parameters['weight_decay']
-grad_clip = parameters['grad_clip']
-seed = parameters['seed']
-beam_width = parameters['beam_width']
-max_len = parameters['max_len']
-max_field = parameters['max_field']
-# report = params['report']
-resume_train = parameters['resume']
-copy = parameters['copy']
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-fix_seed(seed)
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--batch_size', default=32,
+                    type=int, help='Mini batch size')
+parser.add_argument('--max_epoch', default=40, type=int,
+                    help='Max epoch for training.')
+parser.add_argument('--lr', default=3e-4, type=float,
+                    help='Initial learning rate.')
+parser.add_argument('--field_emb_dim', default=50, type=int,
+                    help='Dimension of field embedding.')
+parser.add_argument('--pos_emb_dim', default=5, type=int,
+                    help='Dimension of position embedding.')
+parser.add_argument('--word_emb_dim', default=400, type=int,
+                    help='Dimension of word embedding.')
+parser.add_argument('--hidden_dim', default=500, type=int,
+                    help='Dimension of hidden layer.')
+parser.add_argument('--dropout', default=0.3, type=float, help='Dropout rate.')
+parser.add_argument('--weight_decay', default=0.0,
+                    type=float, help='Weight decay (L2 penalty).')
+parser.add_argument('--grad_clip', default=5.0, type=float,
+                    help='Max norm of the gradients clipping.')
+parser.add_argument('--random_seed', default=1, type=int,
+                    help='Seed for generating random numbers.')
+parser.add_argument('--beam_width', default=1, type=int,
+                    help='Size of beam search width.')
+parser.add_argument('--max_len', default=60, type=int,
+                    help='Max length of the texts.')
+parser.add_argument('--max_field', default=100, type=int,
+                    help='Max length of the fields.')
+parser.add_argument('--pos_size', default=31, type=int,
+                    help='Max number of position.')
+parser.add_argument('--train', default=True, type=bool,
+                    help='If False, then doing inference.')
+parser.add_argument('--resume', default=False, type=bool,
+                    help='Whether to load checkpoints to resume training.')
+parser.add_argument('--copy', default=True, type=bool,
+                    help='Whether to use copy mechanism.')
+args = parser.parse_args()
+
+fix_seed(args.random_seed)
 
 cur_time = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
 logger = get_logger('./results/logs/' + cur_time + '.log')
-logger.info(f'GPU_device: {torch.cuda.get_device_name()}')
-for item in parameters:
-    logger.info(f'{item}: {parameters[item]}')
+
+for arg in vars(args):  # print arguments
+    logger.info("{} : {}".format(arg, getattr(args, arg)))
 
 start_time = time.time()
-data_processor = DataProcessor()
+data_processor = DataProcessor(args)
 train_data_loader = data_processor.get_data_loader(
-    mode='train', batch_size=batch_size, shuffle=True, device=device)
+    mode='train', batch_size=args.batch_size, shuffle=True)
 dev_data_loader = data_processor.get_data_loader(
-    mode='dev', batch_size=batch_size, shuffle=False, device=device)
+    mode='dev', batch_size=args.batch_size, shuffle=False)
 field_vocab_size = data_processor.field_vocab_size
 pos_size = data_processor.pos_size
 word_vocab_size = data_processor.word_vocab_size
@@ -61,17 +83,20 @@ def weights_init(m: nn.Module):
 
 
 encoder = EncoderAttn(field_vocab_size, pos_size, word_vocab_size,
-                      field_emb_dim, pos_embed_dim, word_embed_dim, hidden_dim, dropout)
-decoder = DecoderAttn(word_vocab_size, word_embed_dim, hidden_dim, dropout)
-model = Table2Text(encoder, decoder, beam_width).to(device)
-model.apply(weights_init)
+                      args.field_emb_dim, args.pos_emb_dim, args.word_emb_dim,
+                      args.hidden_dim, args.dropout)
+decoder = DecoderAttn(word_vocab_size,
+                      args.word_embed_dim, args.hidden_dim, args.dropout)
+
+model = Table2Text(encoder, decoder, args.beam_width,
+                   args.max_len, args.max_field).to(device)
 
 optimizer = optim.Adam(
-    model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 criterion = nn.NLLLoss()
 early_stop = EarlyStopping(mode='min', min_delta=0.001, patience=5)
 
-if resume_train:
+if args.resume:
     checkpoint, cp_name = load_checkpoint(latest=True)
     model.load_state_dict(checkpoint['model'])
     optimizer.load_state_dict(checkpoint['optimizer'])
@@ -88,7 +113,7 @@ def train(data_loader):
         loss = criterion(train_output, train_target[:, 1:].reshape(-1))
         loss.backward()
         epoch_loss += loss.item()
-        nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
         optimizer.step()
     return epoch_loss / len(data_loader)
 
@@ -118,7 +143,7 @@ def evaluate(infer_input):
 
 
 loss_dict_train, loss_dict_dev = [], []
-for epoch in range(1, int(max_epoch + 1)):
+for epoch in range(1, int(args.max_epoch + 1)):
     start_time = time.time()
     train_loss = train(train_data_loader)
     dev_loss = validate(dev_data_loader)
@@ -127,14 +152,14 @@ for epoch in range(1, int(max_epoch + 1)):
 
     epoch_min, epoch_sec = record_time(start_time, time.time())
     logger.info(
-        f'epoch: [{epoch:02}/{max_epoch}]  train_loss={train_loss:.3f}  valid_loss={dev_loss:.3f}  '
+        f'epoch: [{epoch:02}/{args.max_epoch}]  train_loss={train_loss:.3f}  valid_loss={dev_loss:.3f}  '
         f'duration: {epoch_min}m {epoch_sec}s')
 
     if early_stop.step(dev_loss):
-        logger.info(f'early stop at [{epoch:02}/{max_epoch}]')
+        logger.info(f'early stop at [{epoch:02}/{args.max_epoch}]')
         break
 
-if max_epoch > 0:
+if args.max_epoch > 0:
     save_checkpoint(experiment_time=cur_time, model=model, optimizer=optimizer)
 
 check_file_exist('./results/rouge/system')
@@ -148,11 +173,11 @@ bleu_scorer.set_refs(ref_summaries)
 rouge_scorer.set_refs(ref_summaries)
 
 for idx_data in range(len(data_processor.test_data)):
-    seq_input = torch.tensor(data_processor.process_one_data(idx_data=idx_data), dtype=torch.long,
-                             device=device).unsqueeze(0)
+    seq_input = torch.tensor(data_processor.process_one_data(
+        idx_data=idx_data), dtype=torch.long, device=device).unsqueeze(0)
     seq_output, attn_map = evaluate(seq_input)
     list_seq = seq_output.squeeze().tolist()
-    if not copy:
+    if not args.copy:
         text_gen = data_processor.translate(list_seq)
     else:
         text_gen = data_processor.translate_w_copy(

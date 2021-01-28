@@ -3,7 +3,6 @@ from queue import PriorityQueue
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from parameters import parameters
 from field_lstm import CustomLstmCell, BidirectionalLSTM
 
 
@@ -94,14 +93,13 @@ class DecoderAttn(nn.Module):
 
 
 class Table2Text(nn.Module):
-    def __init__(self, encoder, decoder, beam_width):
+    def __init__(self, encoder, decoder, beam_width, max_len, max_field):
         super(Table2Text, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.beam_width = beam_width
-
-        self.max_len = parameters['max_len']
-        self.max_field = parameters['max_field']
+        self.max_len = max_len
+        self.max_field = max_field
 
     def forward(self, seq_input, seq_target, train_mode):
         # encoder
@@ -132,7 +130,9 @@ class Table2Text(nn.Module):
                         attn_map = attn_map[:timeStep]
                         break
             else:  # beam search
-                seq_output, attn_map = beam_search(beam_width=self.beam_width,
+                seq_output, attn_map = beam_search(max_len=self.max_len,
+                                                   max_field=self.max_field,
+                                                   beam_width=self.beam_width,
                                                    decoder=self.decoder,
                                                    decoder_input=seq_target,
                                                    decoder_hidden=decoder_hidden,
@@ -160,9 +160,8 @@ class BeamSearchNode(object):
         return self.inherited_order < other.inherited_order
 
 
-def beam_search(beam_width, decoder, decoder_input, decoder_hidden, content_selection):
-    max_length = parameters['max_len']
-    max_field = parameters['max_field']
+def beam_search(max_len, max_field, beam_width,
+                decoder, decoder_input, decoder_hidden, content_selection):
     EOS_TOKEN = 3
     nodes = PriorityQueue()
     next_nodes = PriorityQueue()
@@ -178,7 +177,7 @@ def beam_search(beam_width, decoder, decoder_input, decoder_hidden, content_sele
     while True:
         # pop one then put it back or break loop, to check if has arrive EOS_TOKEN or max_length
         eos_prob, eos_node = nodes.get()
-        if eos_node.length >= max_length:
+        if eos_node.length >= max_len:
             end_node = eos_node
             break
         if eos_node.current_input.item() == EOS_TOKEN and eos_node.previousNode is not None:
