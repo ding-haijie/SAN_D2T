@@ -30,14 +30,12 @@ The cleaned data we have preprocessed can be downloaded at [Google Drive](https:
 
 ### Usage
 
-Run `preprocess/preprocess.py` to process original files into json-format files into 'data/' folder.
+Run `python preprocess/preprocess.py` to process original files into json-format files into 'data/' folder.
 
-Alter `parameters.py` to tune hyper-parameters and settings.
-
-Set `train_mode` in `parameters.py` as `True`, then run `train.py` to continue training/save model, and evaluate the pre-trained models with metrics **BLEU** and **ROUGE**.
+Run `python train.py` to continue training/save model, and evaluate the pre-trained models with metrics **BLEU** and **ROUGE**.
 
 The pickled model files we have trained can be downloaded at [Google Drive](https://drive.google.com/drive/folders/1wSuHSe-iEjdbA24Es1V7fpz35H1O8JiO?usp=sharing) .
 
-Set `train_mode` in `parameters.py` as `False`, then run `data2text.py` to generate utterances and attention maps.
+Run `python data2text.py` to generate utterances and attention maps.
 
 ## Reference
