@@ -48,7 +48,8 @@ print(f'max_len of text: {max_len}')  # 269
 print(f'average_len of text: {average_len:.2f}')  # 25.75
 print(f'max_cnt of field: {max_field}')  # 791
 print(f'average_cnt of field: {average_field:.2f}')  # 45.65
-print(f'average_cnt of field (no-repeat): {average_no_repeat_field:.2f}')  # 12.43
+# 12.43
+print(f'average_cnt of field (no-repeat): {average_no_repeat_field:.2f}')
 
 # get distribution of the length of summary
 plt.bar(list(text_len_dict.keys()), text_len_dict.values())
