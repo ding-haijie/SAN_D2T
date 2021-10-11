@@ -3,12 +3,6 @@
 
 *Generate text from Structured-data (i.e. Wikipedia Table)*.
 
-## Model Overview
-
-<div align="center">
- <img src="./doc/model.jpg" alt="model_structure.jpg" title="Model Overview" width="80%" />
-</div>
-
 ## Dependencies
 
 * [PyTorch](https://pytorch.org) - Models, computational graphs are built with PyTorch.
@@ -34,8 +28,6 @@ Run `python preprocess/preprocess.py` to process original files into json-format
 
 Run `python train.py` to continue training/save model, and evaluate the pre-trained models with metrics **BLEU** and **ROUGE**.
 
-The pickled model files we have trained can be downloaded at [Google Drive](https://drive.google.com/drive/folders/1wSuHSe-iEjdbA24Es1V7fpz35H1O8JiO?usp=sharing) .
+The model files we have trained can be downloaded at [Google Drive](https://drive.google.com/drive/folders/1wSuHSe-iEjdbA24Es1V7fpz35H1O8JiO?usp=sharing) .
 
 Run `python data2text.py` to generate utterances and attention maps.
-
-## Reference
