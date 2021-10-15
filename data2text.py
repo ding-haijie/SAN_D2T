@@ -43,7 +43,7 @@ if __name__ == '__main__':
                         help='Max length of the fields.')
     parser.add_argument('--pos_size', default=31, type=int,
                         help='Max number of position.')
-    parser.add_argument('--train', default=False, type=bool,
+    parser.add_argument('--train_mode', default=False, type=bool,
                         help='If False, then doing inference.')
     parser.add_argument('--copy', default=True, type=bool,
                         help='Whether to use copy mechanism.')
@@ -57,12 +57,13 @@ if __name__ == '__main__':
     word_vocab_size = data_processor.word_vocab_size
 
     encoder = EncoderAttn(field_vocab_size, pos_size, word_vocab_size,
-                          args.field_emb_dim, args.pos_embed_dim, args.word_embed_dim,
+                          args.field_emb_dim, args.pos_emb_dim, args.word_emb_dim,
                           args.hidden_dim, args.dropout)
     decoder = DecoderAttn(word_vocab_size,
-                          args.word_embed_dim, args.hidden_dim, args.dropout)
+                          args.word_emb_dim, args.hidden_dim, args.dropout)
 
-    model = Table2Text(encoder, decoder, beam_width=args.beam_width).to(device)
+    model = Table2Text(encoder, decoder, beam_width=args.beam_width,
+                       max_len=args.max_len, max_field=args.max_field).to(device)
 
     # load the latest checkpoint
     checkpoint, cp_name = load_checkpoint(latest=True)
