@@ -43,7 +43,7 @@ if __name__ == '__main__':
                         help='Max length of the fields.')
     parser.add_argument('--pos_size', default=31, type=int,
                         help='Max number of position.')
-    parser.add_argument('--train_mode', default=False, type=bool,
+    parser.add_argument('--train', default=False, type=bool,
                         help='If False, then doing inference.')
     parser.add_argument('--copy', default=True, type=bool,
                         help='Whether to use copy mechanism.')
