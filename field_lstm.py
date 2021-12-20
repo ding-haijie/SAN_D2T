@@ -27,9 +27,9 @@ class CustomLstmCell(nn.Module):
         """ input_shape: (batch_size, input_size) """
         if states is None:
             h_x = torch.randn(seq_input.size(0), self.hidden_size,
-                              requires_grad=False).cuda()
+                              requires_grad=False).to('cuda' if torch.cuda.is_available() else 'cpu')
             c_x = torch.randn(seq_input.size(0), self.hidden_size,
-                              requires_grad=False).cuda()
+                              requires_grad=False).to('cuda' if torch.cuda.is_available() else 'cpu')
         else:
             h_x, c_x = states
 

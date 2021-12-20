@@ -45,12 +45,14 @@ def load_checkpoint(latest, file_name=None):
         file_list = os.listdir(checkpoints_dir)
         file_list.sort(key=lambda fn: os.path.getmtime(
             checkpoints_dir + '/' + fn))
-        checkpoint = torch.load(checkpoints_dir + '/' + file_list[-1])
+        checkpoint = torch.load(checkpoints_dir + '/' + file_list[-1], map_location=torch.device(
+            'cuda' if torch.cuda.is_available() else 'cpu'))
         return checkpoint, str(file_list[-1])
     else:
         if file_name is None:
             raise ValueError('checkpoint_path cannot be empty!')
-        checkpoint = torch.load(checkpoints_dir + '/' + file_name)
+        checkpoint = torch.load(checkpoints_dir + '/' + file_name, map_location=torch.device(
+            'cuda' if torch.cuda.is_available() else 'cpu'))
         return checkpoint, file_name
 
 

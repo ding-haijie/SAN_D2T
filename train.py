@@ -45,9 +45,9 @@ parser.add_argument('--max_field', default=100, type=int,
                     help='Max length of the fields.')
 parser.add_argument('--pos_size', default=31, type=int,
                     help='Max number of position.')
-parser.add_argument('--train', default=True, type=bool,
+parser.add_argument('--train', default=False, type=bool,
                     help='If False, then doing inference.')
-parser.add_argument('--resume', default=False, type=bool,
+parser.add_argument('--resume', default=True, type=bool,
                     help='Whether to load checkpoints to resume training.')
 parser.add_argument('--copy', default=True, type=bool,
                     help='Whether to use copy mechanism.')
@@ -86,7 +86,7 @@ encoder = EncoderAttn(field_vocab_size, pos_size, word_vocab_size,
                       args.field_emb_dim, args.pos_emb_dim, args.word_emb_dim,
                       args.hidden_dim, args.dropout)
 decoder = DecoderAttn(word_vocab_size,
-                      args.word_embed_dim, args.hidden_dim, args.dropout)
+                      args.word_emb_dim, args.hidden_dim, args.dropout)
 
 model = Table2Text(encoder, decoder, args.beam_width,
                    args.max_len, args.max_field).to(device)

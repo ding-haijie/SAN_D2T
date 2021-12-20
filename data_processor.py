@@ -29,7 +29,7 @@ class DataProcessor(object):
         # max number of the fields been chose
         self.max_field = args.max_field
 
-        if args.train_mode:
+        if args.train:
             self.train_data = self._load_data('./data/train_data.json')
             self.dev_data = self._load_data('./data/valid_data.json')
 
@@ -161,7 +161,7 @@ class DataProcessor(object):
             elif index == self.EOS_TOKEN:
                 break
             else:
-                list_token.append(self.ind2word[str(int(index))])
+                list_token.append(self.ind2word[int(index)])
 
         return ' '.join(list_token)
 

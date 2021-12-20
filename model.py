@@ -108,7 +108,8 @@ class Table2Text(nn.Module):
         if train_mode:
             batch_size = seq_target.size(0)
             seq_output = torch.zeros(
-                (batch_size, self.max_len, self.decoder.output_dim)).cuda()
+                (batch_size, self.max_len, self.decoder.output_dim)).to(
+                    'cuda' if torch.cuda.is_available() else 'cpu')
             for timeStep in range(self.max_len):
                 decoder_input = seq_target[:, timeStep]
                 decoder_output, decoder_hidden, _ = self.decoder(
@@ -117,8 +118,10 @@ class Table2Text(nn.Module):
             return seq_output
         else:
             if self.beam_width == 1:  # beam search with beam_width=1 equals to greedy search
-                attn_map = torch.zeros((self.max_len, self.max_field)).cuda()
-                seq_output = torch.zeros(self.max_len).cuda()
+                attn_map = torch.zeros((self.max_len, self.max_field)).to(
+                    'cuda' if torch.cuda.is_available() else 'cpu')
+                seq_output = torch.zeros(self.max_len).to(
+                    'cuda' if torch.cuda.is_available() else 'cpu')
                 decoder_input = seq_target  # first token: SOS_TOKEN
                 for timeStep in range(self.max_len):
                     decoder_output, decoder_hidden, attn_score = self.decoder(
